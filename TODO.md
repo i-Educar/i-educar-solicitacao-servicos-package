@@ -2,6 +2,13 @@
 
 > Pacote: `buriti/i-educar-solicitacao-servicos-package` · TR **5.6** · Prioridade **P1**
 
+
+## Onda 2 (código inicial 2026-11-24)
+
+- [x] Services de domínio + testes
+- [x] docs/onda-2/
+- [ ] Migrations/UI completas
+
 ## Backlog Laguna
 
 - [ ] Checklist 5.6.x
