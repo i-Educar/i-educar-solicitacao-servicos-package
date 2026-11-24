@@ -2,8 +2,6 @@
 
 namespace iEducar\Packages\BuritiSolicitacaoServicos\Providers;
 
-use iEducar\Packages\BuritiSolicitacaoServicos\Services\ChamadoSla;
-use iEducar\Packages\BuritiSolicitacaoServicos\Services\FluxoEscolaSme;
 use Illuminate\Support\ServiceProvider;
 
 class SolicitacaoServicosServiceProvider extends ServiceProvider
@@ -12,8 +10,7 @@ class SolicitacaoServicosServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->app->singleton(ChamadoSla::class);
-        $this->app->singleton(FluxoEscolaSme::class);
+        // Services são value objects — instanciar com `new` nos callers (não bind no container).
     }
 
     public function boot(): void
