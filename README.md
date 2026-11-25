@@ -4,6 +4,16 @@ Pacote Buriti para o i-Educar **2.12** (organização [i-Educar](https://github.
 
 Composer: `buriti/i-educar-solicitacao-servicos-package`
 
+## Compatibilidade
+
+| Produto | Versão |
+| --- | --- |
+| **i-Educar** | **2.12.x** (min. 2.12.0) |
+| **i-Diário** | Portabilis i-Diário (espelho Laguna) via API/SSO do core |
+| Pacote | `0.2.0` |
+
+Declarado em `composer.json` → `extra.ieducar` e `extra.idiario`.
+
 ## Documentos Laguna / PE-77/2026
 
 - `EPIC.md` · `ROADMAP.md` · `TODO.md` · `REQUISITOS-TR.md`

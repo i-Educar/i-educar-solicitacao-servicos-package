@@ -2,14 +2,13 @@
 
 namespace iEducar\Packages\BuritiSolicitacaoServicos\Services;
 
+/** @deprecated Use FluxoChamado */
 final class FluxoEscolaSme
 {
-    public static function proximoStatus(string $atual): string {
-        return match($atual) {
-            'aberto' => 'triagem_sme',
-            'triagem_sme' => 'em_atendimento',
-            'em_atendimento' => 'resolvido',
-            default => $atual,
-        };
+    public static function proximoStatus(string $atual): string
+    {
+        $prox = FluxoChamado::proximos($atual);
+
+        return $prox[0] ?? $atual;
     }
 }
