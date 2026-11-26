@@ -18,6 +18,8 @@ class SolicitacaoServicosServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(dirname(__DIR__, 2).'/config/solicitacao.php', 'solicitacao');
+        // Fora de runningInConsole(): o check do Ambiente Laguna (HTTP) usa Artisan::all().
+        $this->commands([SolicitacaoDemoCommand::class]);
     }
 
     public function boot(): void
@@ -32,7 +34,6 @@ class SolicitacaoServicosServiceProvider extends ServiceProvider
             if (\App\Support\Tenancy\PackageTenant::allows(self::PACKAGE)) {
                 $this->loadMigrationsFrom($root.'/database/migrations');
             }
-            $this->commands([SolicitacaoDemoCommand::class]);
         }
 
         Route::middleware([
