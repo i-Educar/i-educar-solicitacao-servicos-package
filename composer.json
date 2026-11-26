@@ -1,50 +1,50 @@
 {
-    "name": "buriti/i-educar-solicitacao-servicos-package",
-    "description": "Solicitação de serviços (TR 5.6) para o i-Educar 2.12.",
-    "version": "0.2.0",
-    "type": "library",
-    "license": "GPL-2.0-or-later",
-    "keywords": [
-        "ieducar",
-        "buriti",
-        "laguna",
-        "idiario",
-        "2.12"
-    ],
-    "authors": [
-        {
-            "name": "Buriti"
-        }
-    ],
-    "require": {
-        "php": ">=8.3",
-        "illuminate/support": "^11.0|^12.0|^13.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "iEducar\\Packages\\BuritiSolicitacaoServicos\\": "src/"
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "iEducar\\Packages\\BuritiSolicitacaoServicos\\Providers\\SolicitacaoServicosServiceProvider"
-            ]
-        },
-        "ieducar": {
-            "compatible": [
-                "2.12"
-            ],
-            "min": "2.12.0",
-            "notes": "Alvo exclusivo i-Educar 2.12 (PHP ≥ 8.3, Illuminate ^11|^12|^13)."
-        },
-        "idiario": {
-            "compatible": true,
-            "via": "API i-Educar 2.12 + SSO (IdiarioPortal)",
-            "notes": "Compatível com Portabilis i-Diário no espelho Laguna; frequência/notas via sync do core."
-        }
-    },
-    "config": {
-        "sort-packages": true
+  "name": "buriti/i-educar-solicitacao-servicos-package",
+  "description": "Solicitação de serviços (TR 5.6) para o i-Educar 2.12.",
+  "version": "0.2.1",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "keywords": [
+    "ieducar",
+    "buriti",
+    "laguna",
+    "idiario",
+    "2.12"
+  ],
+  "authors": [
+    {
+      "name": "Buriti"
     }
+  ],
+  "require": {
+    "php": ">=8.3",
+    "illuminate/support": "^11.0|^12.0|^13.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "iEducar\\Packages\\BuritiSolicitacaoServicos\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "iEducar\\Packages\\BuritiSolicitacaoServicos\\Providers\\SolicitacaoServicosServiceProvider"
+      ]
+    },
+    "ieducar": {
+      "compatible": [
+        "2.12"
+      ],
+      "min": "2.12.0",
+      "notes": "Alvo exclusivo i-Educar 2.12 (PHP ≥ 8.3, Illuminate ^11|^12|^13)."
+    },
+    "idiario": {
+      "compatible": true,
+      "via": "API i-Educar 2.12 + SSO (IdiarioPortal)",
+      "notes": "Compatível com Portabilis i-Diário no espelho Laguna; frequência/notas via sync do core."
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
 }
