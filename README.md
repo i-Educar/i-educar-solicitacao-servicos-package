@@ -1,30 +1,54 @@
-# Solicitação de serviços (TR 5.6)
+# Solicitação de serviços
 
-Pacote Buriti para o i-Educar **2.12** (organização [i-Educar](https://github.com/i-Educar)).
+Chamados e solicitações da rede escolar: fluxos, anexos, SLAs e relatórios — base também para NMS.
 
 Composer: `buriti/i-educar-solicitacao-servicos-package`
+
+## Para que serve
+
+Organiza pedidos de serviço entre escolas e SME (manutenção, TI, logística etc.) com status, anexos, prazos e visão gerencial.
+
+## Desenho de funções
+
+| Função | Entrega |
+| --- | --- |
+| Abertura de chamado | Solicitação categorizada pela escola/SME |
+| Fluxos e status | Trâmite até conclusão |
+| Anexos | Evidências e documentos do chamado |
+| SLA | Prazos e indicadores de atendimento |
+| Relatórios | Volume, atrasos e desempenho |
+
+## Quem usa
+
+- Escolas (solicitantes)
+- Equipes executoras SME
+- Gestores (SLA)
+
+## Integrações
+
+- Núcleo (escolas/usuários)
+- Assinatura digital (quando o fluxo exigir)
+- Exportação
 
 ## Compatibilidade
 
 | Produto | Versão |
 | --- | --- |
-| **i-Educar** | **2.12.x** (min. 2.12.0) |
-| **i-Diário** | Portabilis i-Diário (espelho Laguna) via API/SSO do core |
-| Pacote | `0.2.0` |
+| **i-Educar** | **2.12.x** |
+| **i-Diário** | Portabilis i-Diário (API / SSO do núcleo) |
+| Pacote | `0.2.1` |
 
-Declarado em `composer.json` → `extra.ieducar` e `extra.idiario`.
+Declarado em `composer.json` → `extra.ieducar` / `extra.idiario`.
 
-## Documentos Laguna / PE-77/2026
+## Documentação
 
-- `EPIC.md` · `ROADMAP.md` · `TODO.md` · `REQUISITOS-TR.md`
-- Padrão: `packages/buriti/PADRAO-PACOTE-2.12.md` (no monorepo)
+| Documento | Uso |
+| --- | --- |
+| [`EPIC.md`](./EPIC.md) | Escopo de produto, aceite e critérios |
+| [`ROADMAP.md`](./ROADMAP.md) | Fases e entregas |
+| [`TODO.md`](./TODO.md) | Backlog operacional |
+| [`REQUISITOS-TR.md`](./REQUISITOS-TR.md) | Rastreio de requisitos (planejamento) |
 
-## Status
+---
 
-Scaffold inicial (documentação + ServiceProvider). Implementação segue a ordem em `ORDEM-DESENVOLVIMENTO-LAGUNA.md`.
-
-## Onda 2
-
-```bash
-php packages/buriti/i-educar-solicitacao-servicos-package/tests/run.php
-```
+Licença: **GPL-2.0-or-later** · Organização [i-Educar](https://github.com/i-Educar)
