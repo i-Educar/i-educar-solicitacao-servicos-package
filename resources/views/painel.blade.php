@@ -7,8 +7,8 @@
     Abra um pedido, encaminhe ao setor certo e acompanhe o prazo de atendimento.
 @endsection
 @section('acoes-topo')
-    <a class="botao" href="{{ url('/solicitacao-servicos/novo') }}"><i class="fa fa-plus"></i> Novo pedido</a>
-    <a class="botao claro" href="{{ url('/solicitacao-servicos/abertos') }}"><i class="fa fa-comments"></i> Em andamento</a>
+    <a class="botao icone" href="{{ url('/solicitacao-servicos/novo') }}" title="Novo pedido" aria-label="Novo pedido"><i aria-hidden="true" class="fa fa-plus"></i></a>
+    <a class="botao claro icone" href="{{ url('/solicitacao-servicos/abertos') }}" title="Em andamento" aria-label="Em andamento"><i aria-hidden="true" class="fa fa-comments"></i></a>
 @endsection
 
 @section('conteudo')

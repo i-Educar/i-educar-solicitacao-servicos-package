@@ -12,8 +12,8 @@ use iEducar\Packages\BuritiSolicitacaoServicos\Support\Acesso;
 use iEducar\Packages\BuritiSolicitacaoServicos\Support\Processos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -95,9 +95,9 @@ class SolicitacaoController extends Controller
             'analiseTitulo' => 'SLA e prioridades',
             'resumo' => 'Chamados SME/escola · abrir, encaminhar, responder e medir SLA.',
             'atalhos' => [
-                ['url' => '/solicitacao-servicos/novo', 'icone' => 'fa-plus', 'rotulo' => '1. Abrir', 'meta' => 'Demanda + PDF'],
-                ['url' => '/solicitacao-servicos/setores', 'icone' => 'fa-sitemap', 'rotulo' => '2. Setores', 'meta' => 'Responsáveis'],
-                ['url' => '/solicitacao-servicos/abertos', 'icone' => 'fa-comments', 'rotulo' => '3. Atender', 'meta' => 'Respostas e andamentos'],
+                ['url' => '/solicitacao-servicos/novo', 'icone' => 'fa-plus', 'rotulo' => 'Abrir', 'meta' => 'Demanda + PDF'],
+                ['url' => '/solicitacao-servicos/setores', 'icone' => 'fa-sitemap', 'rotulo' => 'Setores', 'meta' => 'Responsáveis'],
+                ['url' => '/solicitacao-servicos/abertos', 'icone' => 'fa-comments', 'rotulo' => 'Atender', 'meta' => 'Respostas e andamentos'],
                 ['url' => '/solicitacao-servicos/sla', 'icone' => 'fa-clock-o', 'rotulo' => 'SLA', 'meta' => 'Prazos'],
                 ['url' => '/solicitacao-servicos/relatorios', 'icone' => 'fa-bar-chart', 'rotulo' => 'Indicadores', 'meta' => 'Feedback incluso'],
             ],
@@ -177,7 +177,9 @@ class SolicitacaoController extends Controller
                 'meta' => $c['assunto'].' · '.FluxoChamado::rotulo($status),
                 'badge' => $ok ? 'SLA OK' : 'SLA estourado',
                 'badge_tom' => $ok ? 'ok' : 'fail',
-                'corpo' => ($c['setor'] ?? '—').' · '.($c['responsavel'] ?? '—'),
+                'corpo' => ($c['setor'] ?? '—')
+                    .' · '.($c['responsavel'] ?? '—')
+                    .' · prazo '.ChamadoSla::horasDoChamado($c).'h',
             ];
         }
 
@@ -244,6 +246,21 @@ class SolicitacaoController extends Controller
             return back()->withInput()->with('erro', 'Tipo de pedido inválido. Escolha um tipo da lista ou cadastre em «Tipos de pedido».');
         }
 
+        // 5.6.6: Verificar permissão para abrir nesta categoria
+        if (!$this->podeAbrirCategoria($categoria)) {
+            return back()->withInput()->with('erro', 'Você não tem permissão para abrir chamados na categoria «'.$categoria.'».');
+        }
+
+        // 5.6.8: Verificar limite de chamados abertos
+        $user = Auth::user();
+        $userId = $user?->getKey();
+        if ($userId !== null) {
+            $erroLimite = $this->verificarLimiteChamados($userId, $escola);
+            if ($erroLimite !== null) {
+                return back()->withInput()->with('erro', $erroLimite);
+            }
+        }
+
         $setor = $setorId > 0 ? SetorChamado::buscar($setorId) : null;
         if ($setorId > 0 && $setor === null) {
             return back()->withInput()->with('erro', 'Setor não encontrado. Escolha outro ou deixe em triagem da SME.');
@@ -258,6 +275,9 @@ class SolicitacaoController extends Controller
         $user = Auth::user();
         $autor = $user?->name ?? $user?->login ?? $user?->email ?? 'usuário';
         $abertoEm = now()->toIso8601String();
+        $slaHoras = $setor !== null
+            ? SetorChamado::normalizarSla($setor['sla_horas'] ?? SetorChamado::SLA_PADRAO)
+            : null;
         $id = PocRegistro::gravar('chamado', $assunto, $escola.' · '.$prioridade, [
             'escola' => $escola,
             'assunto' => $assunto,
@@ -268,6 +288,7 @@ class SolicitacaoController extends Controller
             'aberto_em' => $abertoEm,
             'setor_id' => $setorId > 0 ? $setorId : null,
             'setor' => $setorNome !== '' ? $setorNome : null,
+            'sla_horas' => $slaHoras,
             'responsavel_id' => null,
             'responsavel' => null,
             'solicitante_id' => $user?->getKey(),
@@ -306,7 +327,9 @@ class SolicitacaoController extends Controller
         $this->auditar($id, 'abertura', "Chamado #{$id} aberto ({$categoria}/{$prioridade}".($setorNome !== '' ? " · {$setorNome}" : '').').');
 
         return redirect('/solicitacao-servicos/chamado/'.$id)
-            ->with('ok', "Pedido #{$id} «{$assunto}» aberto para {$escola}.");
+            ->with('ok', "Chamado #{$id} «{$assunto}» aberto para {$escola}"
+                .($setorNome !== '' ? " · setor {$setorNome}" : ' · em triagem da SME')
+                .'.');
     }
 
     public function categorias(): View
@@ -363,34 +386,68 @@ class SolicitacaoController extends Controller
             return back()->with('erro', 'Nome do setor é obrigatório.');
         }
         $responsaveis = $this->responsaveisDoRequest($request);
-        $id = SetorChamado::gravar($nome, $descricao, $responsaveis, true);
-        $this->auditar($id, 'cadastro_setor', "Setor '{$nome}' cadastrado.");
+        $slaHoras = SetorChamado::normalizarSla($request->input('sla_horas', SetorChamado::SLA_PADRAO));
+        $id = SetorChamado::gravar($nome, $descricao, $responsaveis, true, $slaHoras);
+        $this->auditar($id, 'cadastro_setor', "Setor '{$nome}' cadastrado (SLA {$slaHoras}h).");
 
-        return back()->with('ok', "Setor '{$nome}' cadastrado.");
+        return redirect('/solicitacao-servicos/setores')->with('ok', "Setor '{$nome}' cadastrado.");
+    }
+
+    public function editarSetor(int $id): View
+    {
+        $this->exigir(Processos::SETORES);
+        $setor = SetorChamado::buscar($id);
+        if ($setor === null) {
+            abort(404, 'Setor não encontrado.');
+        }
+
+        return view('solicitacao::setor-editar', [
+            'setor' => $setor,
+            'usuarios' => $this->usuariosParaSetor($setor['responsaveis'] ?? []),
+            'podeGravar' => Acesso::permite(Processos::SETORES, 'gravar'),
+        ]);
     }
 
     public function atualizarSetor(Request $request, int $id): RedirectResponse
     {
         $this->exigir(Processos::SETORES, 'gravar');
+        $setor = SetorChamado::buscar($id);
+        if ($setor === null) {
+            return redirect('/solicitacao-servicos/setores')->with('erro', 'Setor não encontrado.');
+        }
         $nome = trim((string) $request->input('nome', ''));
         $descricao = trim((string) $request->input('descricao', ''));
         $ativo = $request->boolean('ativo', true);
+        $slaHoras = SetorChamado::normalizarSla($request->input('sla_horas', $setor['sla_horas'] ?? SetorChamado::SLA_PADRAO));
         if ($nome === '') {
             return back()->with('erro', 'Nome do setor é obrigatório.');
         }
-        $ok = SetorChamado::atualizar($id, $nome, $descricao, $this->responsaveisDoRequest($request), $ativo);
+        $ok = SetorChamado::atualizar(
+            $id,
+            $nome,
+            $descricao,
+            $this->responsaveisDoRequest($request, $setor['responsaveis'] ?? []),
+            $ativo,
+            $slaHoras
+        );
         if (! $ok) {
-            return back()->with('erro', 'Setor não encontrado.');
+            return back()->with('erro', 'Não foi possível atualizar o setor.');
         }
-        $this->auditar($id, 'atualiza_setor', "Setor '{$nome}' atualizado.");
+        $this->auditar($id, 'atualiza_setor', "Setor '{$nome}' atualizado (SLA {$slaHoras}h).");
 
-        return back()->with('ok', "Setor '{$nome}' atualizado.");
+        return redirect('/solicitacao-servicos/setores')->with('ok', "Setor '{$nome}' atualizado.");
     }
 
-    public function relatorios(): View
+    public function relatorios(Request $request): View
     {
         $this->exigir(Processos::RELATORIOS);
-        $chamados = $this->chamados();
+        
+        // 5.6.5: Filtros de período
+        $dataInicio = trim((string) $request->query('data_inicio', ''));
+        $dataFim = trim((string) $request->query('data_fim', ''));
+        $formato = trim((string) $request->query('formato', 'html')); // html, csv, print
+        
+        $chamados = $this->chamadosPorPeriodo($dataInicio, $dataFim);
         $porSituacao = [];
         $porPrioridade = [];
         $porCategoria = [];
@@ -410,6 +467,11 @@ class SolicitacaoController extends Controller
             }
         }
 
+        // 5.6.5: Exportação via módulo unificado (legado ?formato=csv|pdf|xlsx)
+        if (in_array($formato, ['csv', 'pdf', 'xlsx', 'txt'], true)) {
+            return $this->exportarRelatorio($request);
+        }
+
         return view('solicitacao::relatorios', [
             'total' => count($chamados),
             'porSituacao' => $porSituacao,
@@ -418,6 +480,10 @@ class SolicitacaoController extends Controller
             'porSetor' => $porSetor,
             'mediaFeedback' => $notas !== [] ? round(array_sum($notas) / count($notas), 1) : null,
             'fonte' => $this->fonte(),
+            'chamados' => $chamados, // 5.6.5: lista completa para tabela
+            'dataInicio' => $dataInicio,
+            'dataFim' => $dataFim,
+            'formato' => $formato,
         ]);
     }
 
@@ -583,6 +649,9 @@ class SolicitacaoController extends Controller
         $de = $status;
         $p['setor_id'] = $setorId > 0 ? $setorId : ($p['setor_id'] ?? null);
         $p['setor'] = $setorNome;
+        if ($setor !== null) {
+            $p['sla_horas'] = SetorChamado::normalizarSla($setor['sla_horas'] ?? SetorChamado::SLA_PADRAO);
+        }
         $p['responsavel_id'] = $respId > 0 ? $respId : null;
         $p['responsavel'] = $respNome !== '' ? $respNome : null;
         if ($status === FluxoChamado::STATUS_ABERTO) {
@@ -591,8 +660,23 @@ class SolicitacaoController extends Controller
         PocRegistro::atualizarPayload($id, $p, meta: ($p['escola'] ?? '').' · '.($p['situacao'] ?? ''));
 
         $txt = 'Encaminhado para '.$setorNome.($respNome !== '' ? ' / '.$respNome : '');
+        if ($setor !== null) {
+            $txt .= ' · SLA '.$p['sla_horas'].'h';
+        }
         TimelineChamado::andamento($id, $txt, $this->nomeUsuario(), $de, $p['situacao'] ?? $de, $setorNome, $respNome !== '' ? $respNome : null);
         $this->auditar($id, 'encaminhamento', $txt);
+
+        // 5.6.7 / 5.6.15: Notificar técnico responsável
+        if ($respId > 0 && class_exists(\iEducar\Packages\BuritiLagunaAmbiente\Support\Notificador::class)) {
+            $chamado = $reg['payload'];
+            $assunto = (string) ($chamado['assunto'] ?? "Chamado #{$id}");
+            $escola = (string) ($chamado['escola'] ?? '');
+            \iEducar\Packages\BuritiLagunaAmbiente\Support\Notificador::paraUsuario(
+                $respId,
+                "Chamado #{$id} encaminhado para você: {$assunto} ({$escola})",
+                '/solicitacao-servicos/chamado/'.$id
+            );
+        }
 
         return redirect('/solicitacao-servicos/chamado/'.$id)->with('ok', $txt.'.');
     }
@@ -746,6 +830,17 @@ class SolicitacaoController extends Controller
         PocRegistro::atualizarPayload($id, $payload, meta: ($payload['escola'] ?? '').' · '.$para);
         TimelineChamado::andamento($id, $texto, $this->nomeUsuario(), $de, $para, $payload['setor'] ?? null, $payload['responsavel'] ?? null);
         $this->auditar($id, 'status_'.$para, $texto);
+
+        if (class_exists(\iEducar\Packages\BuritiLagunaAmbiente\Support\Notificador::class)) {
+            $msg = "Chamado #{$id}: {$texto}";
+            $link = '/solicitacao-servicos/chamado/'.$id;
+            $N = \iEducar\Packages\BuritiLagunaAmbiente\Support\Notificador::class;
+            $ids = array_values(array_unique(array_merge(
+                $N::usuariosDoProcesso(Processos::ABERTOS),
+                $N::usuariosDoProcesso(Processos::DEFERIR),
+            )));
+            $N::paraUsuarios($ids, $msg, $link);
+        }
     }
 
     private function exigir(int $processo, string $acao = 'ver'): void
@@ -786,16 +881,31 @@ class SolicitacaoController extends Controller
     }
 
     /**
+     * @param  list<array{user_id:int,nome:string}>  $anteriores
      * @return list<array{user_id:int,nome:string}>
      */
-    private function responsaveisDoRequest(Request $request): array
+    private function responsaveisDoRequest(Request $request, array $anteriores = []): array
     {
-        $ids = array_map('intval', (array) $request->input('responsavel_ids', []));
-        $lista = [];
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) $request->input('responsavel_ids', [])),
+            static fn (int $id): bool => $id > 0
+        )));
+        $porId = [];
         foreach ($this->usuariosRede() as $u) {
-            if (in_array((int) $u['id'], $ids, true)) {
-                $lista[] = ['user_id' => (int) $u['id'], 'nome' => (string) $u['nome']];
+            $porId[(int) $u['id']] = (string) $u['nome'];
+        }
+        foreach ($anteriores as $ant) {
+            $uid = (int) ($ant['user_id'] ?? 0);
+            if ($uid > 0 && ! isset($porId[$uid])) {
+                $porId[$uid] = (string) ($ant['nome'] ?? ('Usuário #'.$uid));
             }
+        }
+        $lista = [];
+        foreach ($ids as $uid) {
+            if (! isset($porId[$uid])) {
+                continue;
+            }
+            $lista[] = ['user_id' => $uid, 'nome' => $porId[$uid]];
         }
         $extras = trim((string) $request->input('responsaveis_texto', ''));
         if ($extras !== '') {
@@ -808,6 +918,43 @@ class SolicitacaoController extends Controller
         }
 
         return SetorChamado::normalizarResponsaveis($lista);
+    }
+
+    /**
+     * Elegíveis do módulo + já alocados no setor (mesmo se perderam permissão).
+     *
+     * @param  list<array{user_id:int,nome:string}>  $alocados
+     * @return list<array{id:int,nome:string,meta?:string,login?:string}>
+     */
+    private function usuariosParaSetor(array $alocados = []): array
+    {
+        $porId = [];
+        foreach ($this->usuariosRede() as $u) {
+            $porId[(int) $u['id']] = [
+                'id' => (int) $u['id'],
+                'nome' => (string) $u['nome'],
+                'meta' => (string) ($u['meta'] ?? $u['login'] ?? 'Com permissão no módulo'),
+                'login' => (string) ($u['login'] ?? ''),
+            ];
+        }
+        foreach ($alocados as $r) {
+            $uid = (int) ($r['user_id'] ?? 0);
+            if ($uid <= 0) {
+                continue;
+            }
+            if (! isset($porId[$uid])) {
+                $porId[$uid] = [
+                    'id' => $uid,
+                    'nome' => (string) ($r['nome'] ?? 'Usuário #'.$uid),
+                    'meta' => 'Já alocado · revise a permissão do tipo de usuário',
+                    'login' => '',
+                ];
+            }
+        }
+        $out = array_values($porId);
+        usort($out, static fn (array $a, array $b): int => strcasecmp($a['nome'], $b['nome']));
+
+        return $out;
     }
 
     /** @return list<array{nome:string,sla_horas:int}> */
@@ -850,12 +997,21 @@ class SolicitacaoController extends Controller
     private function chamados(): array
     {
         if (PocRegistro::contar('chamado') > 0) {
+            $slaPorSetor = [];
+            foreach (SetorChamado::listar(false) as $s) {
+                $slaPorSetor[(int) $s['id']] = (int) $s['sla_horas'];
+            }
             $out = [];
             foreach (PocRegistro::listar('chamado') as $r) {
                 $p = $r['payload'];
                 $situacao = (string) ($p['situacao'] ?? (isset($p['resolvido_em']) ? FluxoChamado::STATUS_RESOLVIDO : FluxoChamado::STATUS_ABERTO));
                 if ($situacao === 'deferido') {
                     $situacao = FluxoChamado::STATUS_RESOLVIDO;
+                }
+                $setorId = isset($p['setor_id']) ? (int) $p['setor_id'] : null;
+                $slaHoras = (int) ($p['sla_horas'] ?? 0);
+                if ($slaHoras <= 0 && $setorId !== null && isset($slaPorSetor[$setorId])) {
+                    $slaHoras = $slaPorSetor[$setorId];
                 }
                 $out[] = [
                     'id' => $r['id'],
@@ -868,8 +1024,9 @@ class SolicitacaoController extends Controller
                     'descricao' => (string) ($p['descricao'] ?? ''),
                     'parecer' => (string) ($p['parecer'] ?? ''),
                     'resolvido_em' => isset($p['resolvido_em']) ? (string) $p['resolvido_em'] : null,
-                    'setor_id' => isset($p['setor_id']) ? (int) $p['setor_id'] : null,
+                    'setor_id' => $setorId,
                     'setor' => isset($p['setor']) ? (string) $p['setor'] : null,
+                    'sla_horas' => $slaHoras > 0 ? $slaHoras : null,
                     'responsavel_id' => isset($p['responsavel_id']) ? (int) $p['responsavel_id'] : null,
                     'responsavel' => isset($p['responsavel']) ? (string) $p['responsavel'] : null,
                     'solicitante' => isset($p['solicitante']) ? (string) $p['solicitante'] : null,
@@ -893,6 +1050,200 @@ class SolicitacaoController extends Controller
         return PocRegistro::contar('chamado') > 0
             ? 'solicitacao_servicos.poc_registro'
             : 'demo';
+    }
+
+    /**
+     * 5.6.5: Filtrar chamados por período
+     * @return list<array<string,mixed>>
+     */
+    private function chamadosPorPeriodo(string $dataInicio, string $dataFim): array
+    {
+        $todos = $this->chamados();
+        if ($dataInicio === '' && $dataFim === '') {
+            return $todos;
+        }
+
+        $filtrados = [];
+        foreach ($todos as $c) {
+            $abertoEm = (string) ($c['aberto_em'] ?? '');
+            if ($abertoEm === '') {
+                continue;
+            }
+            
+            try {
+                $data = new \DateTime($abertoEm);
+                $dataStr = $data->format('Y-m-d');
+                
+                if ($dataInicio !== '' && $dataStr < $dataInicio) {
+                    continue;
+                }
+                if ($dataFim !== '' && $dataStr > $dataFim) {
+                    continue;
+                }
+                $filtrados[] = $c;
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+
+        return $filtrados;
+    }
+
+    /**
+     * 5.6.5: Exportação via exportação unificada (dados do módulo → geração 4.x).
+     */
+    public function exportarRelatorio(Request $request): Response|RedirectResponse
+    {
+        $this->exigir(Processos::RELATORIOS);
+
+        $dataInicio = trim((string) $request->input('data_inicio', $request->query('data_inicio', '')));
+        $dataFim = trim((string) $request->input('data_fim', $request->query('data_fim', '')));
+        $formato = strtolower(trim((string) $request->input('formato', $request->query('formato', 'pdf'))));
+        $item = strtolower(trim((string) $request->input('item', 'completo')));
+        $chamados = $this->chamadosPorPeriodo($dataInicio, $dataFim);
+
+        $periodo = ($dataInicio !== '' || $dataFim !== '')
+            ? sprintf('%s a %s', $dataInicio ?: '…', $dataFim ?: '…')
+            : 'todos os períodos';
+
+        if (in_array($item, ['situacao', 'prioridade', 'categoria'], true)) {
+            $campo = match ($item) {
+                'prioridade' => 'prioridade',
+                'categoria' => 'categoria',
+                default => 'situacao',
+            };
+            $totais = [];
+            foreach ($chamados as $c) {
+                $chave = (string) ($c[$campo] ?? '—');
+                if ($campo === 'situacao') {
+                    $chave = FluxoChamado::rotulo((string) ($c['situacao'] ?? 'aberto'));
+                }
+                $totais[$chave] = ($totais[$chave] ?? 0) + 1;
+            }
+            ksort($totais, SORT_STRING);
+            $linhas = [];
+            foreach ($totais as $rotulo => $qtd) {
+                $linhas[] = [$rotulo, $qtd];
+            }
+
+            return \iEducar\Packages\BuritiExportacaoUnificada\Support\ExportacaoModulo::download(
+                'Chamados — por '.$item,
+                [ucfirst($item), 'Quantidade'],
+                $linhas,
+                'Solicitação de serviços',
+                $formato,
+                $periodo,
+                null,
+                'chamados-'.$item,
+            );
+        }
+
+        $linhas = [];
+        foreach ($chamados as $c) {
+            $abertoEm = '';
+            try {
+                if (! empty($c['aberto_em'])) {
+                    $abertoEm = (new \DateTime((string) $c['aberto_em']))->format('d/m/Y H:i');
+                }
+            } catch (\Throwable) {
+                $abertoEm = (string) ($c['aberto_em'] ?? '');
+            }
+            $linhas[] = [
+                $c['id'] ?? '',
+                $abertoEm,
+                $c['escola'] ?? '',
+                $c['assunto'] ?? '',
+                $c['categoria'] ?? '',
+                $c['prioridade'] ?? '',
+                FluxoChamado::rotulo((string) ($c['situacao'] ?? 'aberto')),
+                $c['setor'] ?? 'sem setor',
+                $c['responsavel'] ?? 'sem responsável',
+            ];
+        }
+
+        return \iEducar\Packages\BuritiExportacaoUnificada\Support\ExportacaoModulo::download(
+            'Chamados — relatório por período',
+            ['ID', 'Data abertura', 'Escola', 'Assunto', 'Categoria', 'Prioridade', 'Situação', 'Setor', 'Responsável'],
+            $linhas,
+            'Solicitação de serviços',
+            $formato,
+            $periodo,
+            null,
+            'chamados-periodo',
+        );
+    }
+
+    /**
+     * 5.6.6: Verifica se usuário pode abrir chamado na categoria
+     */
+    private function podeAbrirCategoria(string $categoria): bool
+    {
+        // Config: restricoes_categoria => ['categoria' => ['user_id', 'user_id', ...]]
+        $restricoes = config('solicitacao.restricoes_categoria', []);
+        
+        if (!isset($restricoes[$categoria])) {
+            return true; // Sem restrição = todos podem abrir
+        }
+
+        $userId = Auth::id();
+        if ($userId === null) {
+            return false;
+        }
+
+        return in_array($userId, (array) $restricoes[$categoria], true);
+    }
+
+    /**
+     * 5.6.8: Conta chamados abertos do solicitante ou escola
+     */
+    private function contarChamadosAbertos(?int $userId = null, ?string $escola = null): int
+    {
+        $count = 0;
+        foreach ($this->chamados() as $c) {
+            $situacao = (string) ($c['situacao'] ?? 'aberto');
+            if (!FluxoChamado::estaAberto($situacao)) {
+                continue;
+            }
+
+            if ($userId !== null && isset($c['solicitante_id'])) {
+                if ((int) ($c['solicitante_id']) === $userId) {
+                    $count++;
+                }
+            }
+
+            if ($escola !== null && isset($c['escola'])) {
+                if ((string) $c['escola'] === $escola) {
+                    $count++;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * 5.6.8: Verifica limite de chamados abertos
+     */
+    private function verificarLimiteChamados(int $userId, string $escola): ?string
+    {
+        $limitePorUsuario = (int) config('solicitacao.limite_chamados_por_usuario', 0);
+        $limitePorEscola = (int) config('solicitacao.limite_chamados_por_escola', 0);
+
+        if ($limitePorUsuario > 0) {
+            $abertosUsuario = $this->contarChamadosAbertos($userId, null);
+            if ($abertosUsuario >= $limitePorUsuario) {
+                return "Você já possui {$abertosUsuario} chamado(s) aberto(s). Limite máximo: {$limitePorUsuario}.";
+            }
+        }
+
+        if ($limitePorEscola > 0) {
+            $abertosEscola = $this->contarChamadosAbertos(null, $escola);
+            if ($abertosEscola >= $limitePorEscola) {
+                return "A escola {$escola} já possui {$abertosEscola} chamado(s) aberto(s). Limite máximo: {$limitePorEscola}.";
+            }
+        }
+
+        return null;
     }
 
     /** @return list<array<string,mixed>> */

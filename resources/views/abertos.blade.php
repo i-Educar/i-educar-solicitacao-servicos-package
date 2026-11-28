@@ -7,16 +7,16 @@
     Filtre por setor, responsável ou situação e abra o pedido para responder ou encaminhar.
 @endsection
 @section('acoes-topo')
-    <a class="botao" href="{{ url('/solicitacao-servicos/novo') }}"><i class="fa fa-plus"></i> Novo pedido</a>
-    <a class="botao claro" href="{{ url('/solicitacao-servicos') }}"><i class="fa fa-dashboard"></i> Início</a>
+    <a class="botao icone" href="{{ url('/solicitacao-servicos/novo') }}" title="Novo pedido" aria-label="Novo pedido"><i aria-hidden="true" class="fa fa-plus"></i></a>
+    <a class="botao claro icone" href="{{ url('/solicitacao-servicos') }}" title="Início" aria-label="Início"><i aria-hidden="true" class="fa fa-dashboard"></i></a>
 @endsection
 
 @section('conteudo')
 @php $f = $filtros ?? ['setor'=>'','responsavel'=>'','status'=>'']; @endphp
 
-    <div class="bloco">
-        <h2><i class="fa fa-filter"></i> Filtrar pedidos</h2>
-        <form class="form-grid" method="get" action="{{ url('/solicitacao-servicos/abertos') }}">
+    <div class="buriti-filtro-bloco">
+        <h2><i class="fa fa-filter"></i> Filtros</h2>
+        <form class="buriti-filtro" method="get" action="{{ url('/solicitacao-servicos/abertos') }}">
             @include('buriti-ui::select-busca', [
                 'campo' => 'setor',
                 'rotulo' => 'Setor',
@@ -26,13 +26,12 @@
                     'nome' => $s,
                 ])->all(),
                 'selecionado' => $f['setor'] ?? '',
-                'placeholder' => 'Digite o nome do setor…',
-                'vazio' => '— todos os setores —',
-                'tamanho' => 5,
-                'ajuda' => 'Deixe vazio para ver todos. Também pode digitar parte do nome.',
+                'placeholder' => 'Setor…',
+                'vazio' => 'Todos',
+                'compacto' => true,
             ])
             <label>Responsável
-                <input name="responsavel" value="{{ $f['responsavel'] ?? '' }}" placeholder="Quem está atendendo">
+                <input name="responsavel" value="{{ $f['responsavel'] ?? '' }}" placeholder="Quem atende">
             </label>
             @include('buriti-ui::select-busca', [
                 'campo' => 'status',
@@ -43,9 +42,9 @@
                     'nome' => \iEducar\Packages\BuritiSolicitacaoServicos\Services\FluxoChamado::rotulo($st),
                 ])->all(),
                 'selecionado' => $f['status'] ?? '',
-                'placeholder' => 'Buscar situação…',
-                'vazio' => '— em aberto / resolvidos recentes —',
-                'tamanho' => 5,
+                'placeholder' => 'Situação…',
+                'vazio' => 'Em aberto',
+                'compacto' => true,
             ])
             <div class="acoes">
                 <button class="botao" type="submit"><i class="fa fa-search"></i> Filtrar</button>

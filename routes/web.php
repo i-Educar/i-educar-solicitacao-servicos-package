@@ -15,9 +15,11 @@ Route::prefix('solicitacao-servicos')->group(function (): void {
 
     Route::get('/setores', [SolicitacaoController::class, 'setores']);
     Route::post('/setores', [SolicitacaoController::class, 'salvarSetor']);
+    Route::get('/setores/{id}/editar', [SolicitacaoController::class, 'editarSetor'])->whereNumber('id');
     Route::post('/setores/{id}', [SolicitacaoController::class, 'atualizarSetor'])->whereNumber('id');
 
     Route::get('/relatorios', [SolicitacaoController::class, 'relatorios']);
+    Route::post('/relatorios/exportar', [SolicitacaoController::class, 'exportarRelatorio']);
     Route::get('/auditoria', [SolicitacaoController::class, 'auditoria']);
 
     Route::get('/chamado/{id}', [SolicitacaoController::class, 'detalhe'])->whereNumber('id');

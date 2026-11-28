@@ -53,5 +53,5 @@
 
 ## Referências
 
-- `tmp/DOC-EXECUTIVO-PE-77-2026-LAGUNA-IEDUCAR.md`
+- `packages/buriti/docs/laguna/DOC-EXECUTIVO-PE-77-2026-LAGUNA-IEDUCAR.md`
 - OCR: `/tmp/edital-ocr/p-01.txt` … `p-79.txt` (quando disponível)

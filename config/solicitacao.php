@@ -41,4 +41,24 @@ return [
     */
     'anexo_max_kb' => (int) env('SOLICITACAO_ANEXO_MAX_KB', 5120),
     'seed_setores_padrao' => (bool) env('SOLICITACAO_SEED_SETORES', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | 5.6.6: Restrição de abertura por categoria
+    | Formato: 'categoria' => [user_id1, user_id2, ...]
+    | Se categoria não listada, todos podem abrir. Se listada, só IDs permitidos.
+    |--------------------------------------------------------------------------
+    */
+    'restricoes_categoria' => [
+        // Exemplo: 'TI / Informática' => [1, 2, 3],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | 5.6.8: Limite de chamados abertos
+    | 0 = sem limite
+    |--------------------------------------------------------------------------
+    */
+    'limite_chamados_por_usuario' => (int) env('SOLICITACAO_LIMITE_USUARIO', 0),
+    'limite_chamados_por_escola' => (int) env('SOLICITACAO_LIMITE_ESCOLA', 0),
 ];

@@ -1,7 +1,7 @@
 # ROADMAP — Solicitação de Serviços (escola ↔ SME)
 
 > Pacote: `buriti/i-educar-solicitacao-servicos-package` · TR **5.6** · Prioridade **P1** · Nota **C**  
-> Alinhado a `tmp/DOC-EXECUTIVO-PE-77-2026-LAGUNA-IEDUCAR.md`
+> Alinhado a `packages/buriti/docs/laguna/DOC-EXECUTIVO-PE-77-2026-LAGUNA-IEDUCAR.md`
 
 ## Visão
 

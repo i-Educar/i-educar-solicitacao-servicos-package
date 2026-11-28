@@ -4,9 +4,9 @@ namespace iEducar\Packages\BuritiSolicitacaoServicos\Support;
 
 final class Identidade
 {
-    public const COR = '#b86e00';
-    public const DESTAQUE = '#e0a100';
-    public const COR_CLARA = '#fff6e8';
+    public const COR = '#c74634';
+    public const DESTAQUE = '#e24b35';
+    public const COR_CLARA = '#fdeceb';
     public const ICONE = 'fa-ticket';
     public const NOME = 'Chamados';
 

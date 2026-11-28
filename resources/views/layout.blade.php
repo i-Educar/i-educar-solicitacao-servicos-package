@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="{{ url('/intranet/styles/font-awesome.css') }}">
     <style>
         :root {
-            --cor: {{ $identidade['cor'] ?? '#b86e00' }};
-            --destaque: {{ $identidade['destaque'] ?? '#e0a100' }};
-            --clara: {{ $identidade['clara'] ?? '#fff6e8' }};
-            --nav: #15222b; --nav-texto: #d5e0e6; --fundo: #e8edf0;
+            --cor: {{ $identidade['cor'] ?? '#c74634' }};
+            --destaque: {{ $identidade['destaque'] ?? '#e24b35' }};
+            --clara: {{ $identidade['clara'] ?? '#fdeceb' }};
+            --nav: #15222b; --nav-texto: #e8eef3; --fundo: #e8edf0;
             --tinta: #1a242b; --suave: #5b6b76; --linha: #cfd8df;
-            --ok: #17663f; --ok-fundo: #e5f6ec; --erro: #9b2c2c; --erro-fundo: #fdeceb;
-            --ambar: #b86e00; --cor-tela: var(--cor);
+            --ok: #17663f; --ok-fundo: #e5f6ec; --erro: #c74634; --erro-fundo: #fdeceb;
+            --ambar: #a85f00; --cor-tela: var(--cor);
         }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: "Segoe UI", sans-serif; font-size: 14px; color: var(--tinta);
@@ -31,34 +31,35 @@
         .modulo-nome { width: 100%; display: flex; justify-content: space-between; margin: 0; padding: 8px; background: 0; border: 0; color: #8aa0ad; font: inherit; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
         .modulo a { display: flex; align-items: center; gap: 10px; color: var(--nav-texto); text-decoration: none; border-radius: 10px; padding: 8px 10px; }
         .modulo a i { width: 18px; text-align: center; }
-        .modulo a:hover, .modulo a.ativo { background: color-mix(in srgb, var(--cor) 88%, #fff); color: #fff; font-weight: 700; }
+        .modulo a:hover { background: color-mix(in srgb, var(--cor) 42%, rgba(255,255,255,.08)); color: #fff; }
+        .modulo a.ativo { background: color-mix(in srgb, var(--cor) 68%, #060b10); color: #fff; font-weight: 700; box-shadow: inset 3px 0 0 var(--destaque, var(--cor)); }
         .miolo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
         .topo { position: sticky; top: 0; z-index: 10; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 18px; background: color-mix(in srgb,#fff 90%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--linha); }
         .migalha { margin: 0; color: var(--suave); font-size: 13px; } .migalha a { color: var(--cor); font-weight: 700; text-decoration: none; }
         main { padding: 18px 20px 28px; flex: 1; }
         .cabeca-tela { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -18px -20px 16px; padding: 14px 16px 14px 20px;
-            background: linear-gradient(120deg, color-mix(in srgb, var(--clara) 70%, #fff), #fff 55%); border-bottom: 1px solid var(--linha); border-left: 4px solid var(--cor-tela); }
+            background: linear-gradient(120deg, color-mix(in srgb, var(--clara) 70%, var(--mix-branco, #fff)), var(--superficie, #fff) 55%); border-bottom: 1px solid var(--linha); border-left: 4px solid var(--cor-tela); }
         .identidade-tela { display: flex; align-items: center; gap: 12px; }
         .marca-tela { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(145deg, var(--destaque), var(--cor-tela)); color: #fff; font-size: 18px; box-shadow: 0 10px 20px color-mix(in srgb, var(--cor-tela) 28%, transparent); }
         .cabeca-tela h1 { margin: 0; font-size: 1.25rem; } .cabeca-tela .lead { margin: 2px 0 0; color: var(--suave); }
         .acoes-tela { display: flex; flex-wrap: wrap; gap: 8px; }
         .botao { display: inline-flex; align-items: center; gap: 8px; background: var(--cor-tela); color: #fff; border: 0; border-radius: 10px; padding: 8px 12px; font: inherit; text-decoration: none; cursor: pointer; }
-        .botao.claro { background: #fff; color: var(--cor-tela); border: 1px solid color-mix(in srgb, var(--cor-tela) 35%, var(--linha)); }
-        .flash { border-radius: 12px; padding: 12px 14px; margin: 0 0 16px; } .flash.ok { background: var(--ok-fundo); color: var(--ok); } .flash.erro { background: var(--erro-fundo); color: var(--erro); }
-        .bloco { background: #fff; border: 1px solid var(--linha); border-radius: 14px; padding: 14px 16px; margin: 0 0 12px; border-top: 3px solid var(--cor-tela); box-shadow: 0 10px 24px rgba(21,34,43,.04); }
+        .botao.claro { background: var(--superficie, #fff); color: var(--cor-tela); border: 1px solid color-mix(in srgb, var(--cor-tela) 35%, var(--linha)); }
+        .flash { border-radius: 12px; padding: 12px 14px; margin: 0 0 16px; } .flash.ok { background: var(--ok-fundo); color: var(--ok); } .flash.erro { background: var(--erro-fundo); color: var(--erro); } .flash.warn { background: #fff6e8; color: var(--ambar); }
+        .bloco { background: var(--superficie, #fff); border: 1px solid var(--linha); border-radius: 14px; padding: 14px 16px; margin: 0 0 12px; border-top: 3px solid var(--cor-tela); box-shadow: 0 10px 24px rgba(21,34,43,.04); }
         .bloco h2 { margin: 0 0 10px; display: flex; align-items: center; gap: 8px; font-size: 1.05rem; }
         .numeros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 0 0 16px; }
-        .numeros article { --tom: var(--cor-tela); background: #fff; border: 1px solid color-mix(in srgb, var(--tom) 30%, var(--linha)); border-top: 3px solid var(--tom); border-radius: 14px; padding: 14px; box-shadow: 0 8px 18px rgba(21,34,43,.05); animation: sobe .4s ease both; }
-        .numeros .kpi-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin: 0 0 8px; background: color-mix(in srgb, var(--tom) 12%, #fff); color: var(--tom); border: 1px solid color-mix(in srgb, var(--tom) 22%, #fff); }
+        .numeros article { --tom: var(--cor-tela); background: var(--superficie, #fff); border: 1px solid color-mix(in srgb, var(--tom) 30%, var(--linha)); border-top: 3px solid var(--tom); border-radius: 14px; padding: 14px; box-shadow: 0 8px 18px rgba(21,34,43,.05); animation: sobe .4s ease both; }
+        .numeros .kpi-ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin: 0 0 8px; background: color-mix(in srgb, var(--tom) 12%, var(--superficie, #fff)); color: var(--tom); border: 1px solid color-mix(in srgb, var(--tom) 22%, var(--superficie, #fff)); }
         .numeros span { display: block; color: var(--suave); font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
         .numeros strong { font-size: 1.4rem; letter-spacing: -.03em; }
         .atalhos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .atalhos a { display: grid; grid-template-columns: 42px 1fr; gap: 10px; align-items: center; min-height: 64px; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 14px; text-decoration: none; color: var(--tinta); background: linear-gradient(180deg, color-mix(in srgb, var(--clara) 55%, #fff), #fff); font-weight: 700; }
+        .atalhos a { display: grid; grid-template-columns: 42px 1fr; gap: 10px; align-items: center; min-height: 64px; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 14px; text-decoration: none; color: var(--tinta); background: linear-gradient(180deg, color-mix(in srgb, var(--clara) 55%, var(--mix-branco, #fff)), var(--superficie, #fff)); font-weight: 700; }
         .atalhos a i { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: var(--destaque); }
         .atalhos a small { display: block; font-weight: 500; color: var(--suave); margin-top: 2px; }
         .atalhos a:hover { transform: translateY(-2px); border-color: var(--destaque); }
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-        .card { background: #fff; border: 1px solid var(--linha); border-radius: 14px; padding: 14px; border-top: 3px solid var(--tom, var(--cor)); box-shadow: 0 8px 18px rgba(21,34,43,.04); animation: sobe .4s ease both; }
+        .card { background: var(--superficie, #fff); border: 1px solid var(--linha); border-radius: 14px; padding: 14px; border-top: 3px solid var(--tom, var(--cor)); box-shadow: 0 8px 18px rgba(21,34,43,.04); animation: sobe .4s ease both; }
         .card header { display: flex; gap: 10px; align-items: center; margin: 0 0 8px; }
         .card .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, var(--destaque), var(--tom, var(--cor))); }
         .card h3 { margin: 0; font-size: .95rem; } .card .meta { margin: 0; color: var(--suave); font-size: .78rem; }
@@ -66,19 +67,23 @@
         .badge.ok { background: var(--ok-fundo); color: var(--ok); } .badge.fail { background: var(--erro-fundo); color: var(--erro); } .badge.warn { background: #fff6e8; color: var(--ambar); }
         table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--linha); } th { background: var(--clara); color: var(--cor); }
         .grade { display: grid; grid-template-columns: 70px repeat(5, 1fr); gap: 4px; }
-        .grade .h, .grade .c { padding: 8px; border-radius: 8px; background: #fff; border: 1px solid var(--linha); font-size: .78rem; text-align: center; }
+        .grade .h, .grade .c { padding: 8px; border-radius: 8px; background: var(--superficie, #fff); border: 1px solid var(--linha); font-size: .78rem; text-align: center; }
         .grade .h { background: var(--clara); font-weight: 700; color: var(--cor); }
-        .grade .slot { background: color-mix(in srgb, var(--cor) 12%, #fff); border-color: color-mix(in srgb, var(--cor) 30%, var(--linha)); font-weight: 600; }
-        .grade .choque { background: var(--erro-fundo); border-color: color-mix(in srgb, var(--erro) 40%, #fff); color: var(--erro); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; align-items: end; }
+        .grade .slot { background: color-mix(in srgb, var(--cor) 12%, var(--superficie, #fff)); border-color: color-mix(in srgb, var(--cor) 30%, var(--linha)); font-weight: 600; }
+        .grade .choque { background: var(--erro-fundo); border-color: color-mix(in srgb, var(--erro) 40%, var(--superficie, #fff)); color: var(--erro); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: start; }
         .form-grid label { display: grid; gap: 4px; font-size: .8rem; font-weight: 700; color: var(--suave); }
-        .form-grid input, .form-grid select, .form-grid textarea { min-height: 36px; padding: 6px 8px; border: 1px solid var(--linha); border-radius: 8px; font: inherit; background: #fff; }
+        .form-grid input, .form-grid select, .form-grid textarea { min-height: 36px; padding: 6px 8px; border: 1px solid var(--linha); border-radius: 8px; font: inherit; background: var(--superficie, #fff); }
         .form-grid textarea { min-height: 70px; resize: vertical; }
         .form-grid .col-wide { grid-column: 1 / -1; }
         .form-grid .acoes { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; }
+        /* Listbox aberto (size) não deve vazar sobre o próximo campo */
+        .form-grid .buriti-select,
+        .form-grid .buriti-select--compacto { align-self: start; min-width: 0; }
+        .form-grid .buriti-select-lista[size] { max-height: 160px; }
         .timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-        .timeline li { border: 1px solid var(--linha); border-radius: 12px; padding: 10px 12px; background: #fff; border-left: 4px solid var(--destaque); }
-        .timeline li.and { border-left-color: var(--ambar); background: color-mix(in srgb, var(--clara) 40%, #fff); }
+        .timeline li { border: 1px solid var(--linha); border-radius: 12px; padding: 10px 12px; background: var(--superficie, #fff); border-left: 4px solid var(--destaque); }
+        .timeline li.and { border-left-color: var(--ambar); background: color-mix(in srgb, var(--clara) 40%, var(--superficie, #fff)); }
         .timeline li header { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: .82rem; color: var(--suave); margin: 0 0 4px; }
         .timeline li header strong { color: var(--tinta); }
         .timeline li p { margin: 0; }
@@ -102,7 +107,12 @@
             <nav class="modulo">
                 <div class="modulo-nome">{{ $grupo['nome'] }}</div>
                 @foreach($grupo['itens'] as $item)
-                    <a href="{{ url($item['url']) }}" class="@if(request()->is(ltrim($item['url'],'/'))) ativo @endif">
+                    @php
+                        $menuPath = ltrim((string) $item['url'], '/');
+                        $menuAtivo = request()->is($menuPath)
+                            || ($menuPath !== 'solicitacao-servicos' && request()->is($menuPath.'/*'));
+                    @endphp
+                    <a href="{{ url($item['url']) }}" class="@if($menuAtivo) ativo @endif">
                         <i class="fa {{ $item['icone'] }}"></i> {{ $item['rotulo'] }}
                     </a>
                 @endforeach
@@ -128,8 +138,19 @@
                         @hasSection('lead')<p class="lead">@yield('lead')</p>@endif
                     </div>
                 </div>
-                <div class="acoes-tela">@yield('acoes-topo')</div>
+                <div class="acoes-tela">
+                    @yield('acoes-topo')
+                    @includeWhen(View::exists('buriti-ui::informes-modulo'), 'buriti-ui::informes-modulo')
+                </div>
             </header>
+
+            @hasSection('foco')
+                @yield('foco')
+            @endif
+            @hasSection('trilho')
+                <nav class="buriti-trilho" aria-label="Ações da tela">@yield('trilho')</nav>
+            @endif
+
             @yield('conteudo')
         </main>
         <footer class="rodape">Chamados · Laguna · Balcão escola ↔ SME</footer>
